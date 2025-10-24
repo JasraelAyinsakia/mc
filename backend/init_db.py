@@ -11,6 +11,20 @@ def init_database():
     
     with app.app_context():
         print("Creating database tables...")
+        
+        # Drop and recreate courtship_progress table if it exists (schema changed)
+        try:
+            from sqlalchemy import inspect, text
+            inspector = inspect(db.engine)
+            if 'courtship_progress' in inspector.get_table_names():
+                print("Dropping old courtship_progress table (schema updated)...")
+                db.session.execute(text('DROP TABLE IF EXISTS courtship_progress CASCADE'))
+                db.session.commit()
+                print("✓ Old table dropped")
+        except Exception as e:
+            print(f"Note: Could not drop old table: {e}")
+            db.session.rollback()
+        
         db.create_all()
         print("✓ Tables created successfully")
         
