@@ -156,6 +156,21 @@ def get_applications():
     if stage:
         query = query.filter_by(current_stage=stage)
     
+    # Search functionality (only for committee members and above)
+    search = request.args.get('search')
+    if search and current_user.role != 'single':
+        # Join with User table if not already joined
+        if current_user.role in ['central_committee', 'overseer']:
+            query = query.join(User, Application.applicant_id == User.id)
+        
+        # Search by applicant name, partner name, or application number
+        search_filter = db.or_(
+            User.full_name.ilike(f'%{search}%'),
+            Application.partner_name.ilike(f'%{search}%'),
+            Application.application_number.ilike(f'%{search}%')
+        )
+        query = query.filter(search_filter)
+    
     # Order by most recent
     query = query.order_by(Application.created_at.desc())
     

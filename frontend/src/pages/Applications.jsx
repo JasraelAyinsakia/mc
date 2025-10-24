@@ -62,61 +62,63 @@ const Applications = () => {
         )}
       </div>
 
-      {/* Filters */}
-      <div className="card">
-        <div className="grid md:grid-cols-3 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Status
-            </label>
-            <select
-              value={filters.status}
-              onChange={(e) => setFilters({ ...filters, status: e.target.value })}
-              className="input"
-            >
-              <option value="">All Statuses</option>
-              <option value="pending">Pending</option>
-              <option value="approved">Approved</option>
-              <option value="rejected">Rejected</option>
-              <option value="on_hold">On Hold</option>
-            </select>
-          </div>
+      {/* Filters - Only show to committee members and above */}
+      {!isSingle && (
+        <div className="card">
+          <div className="grid md:grid-cols-3 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Status
+              </label>
+              <select
+                value={filters.status}
+                onChange={(e) => setFilters({ ...filters, status: e.target.value })}
+                className="input"
+              >
+                <option value="">All Statuses</option>
+                <option value="pending">Pending</option>
+                <option value="approved">Approved</option>
+                <option value="rejected">Rejected</option>
+                <option value="on_hold">On Hold</option>
+              </select>
+            </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Stage
-            </label>
-            <select
-              value={filters.stage}
-              onChange={(e) => setFilters({ ...filters, stage: e.target.value })}
-              className="input"
-            >
-              <option value="">All Stages</option>
-              <option value="application_submitted">Application Submitted</option>
-              <option value="interview">Interview</option>
-              <option value="medical_tests_requested">Medical Tests</option>
-              <option value="courtship">Courtship</option>
-              <option value="central_committee_review">Central Review</option>
-            </select>
-          </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Stage
+              </label>
+              <select
+                value={filters.stage}
+                onChange={(e) => setFilters({ ...filters, stage: e.target.value })}
+                className="input"
+              >
+                <option value="">All Stages</option>
+                <option value="application_submitted">Application Submitted</option>
+                <option value="interview">Interview</option>
+                <option value="medical_tests_requested">Medical Tests</option>
+                <option value="courtship">Courtship</option>
+                <option value="central_committee_review">Central Review</option>
+              </select>
+            </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Search
-            </label>
-            <div className="relative">
-              <input
-                type="text"
-                value={filters.search}
-                onChange={(e) => setFilters({ ...filters, search: e.target.value })}
-                placeholder="Search..."
-                className="input pl-10"
-              />
-              <MagnifyingGlassIcon className="h-5 w-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Search by Name or Application #
+              </label>
+              <div className="relative">
+                <input
+                  type="text"
+                  value={filters.search}
+                  onChange={(e) => setFilters({ ...filters, search: e.target.value })}
+                  placeholder="Search applicant, partner, or number..."
+                  className="input pl-10"
+                />
+                <MagnifyingGlassIcon className="h-5 w-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* Applications List */}
       {applications.length === 0 ? (
