@@ -6,7 +6,7 @@ import LoadingSpinner from '../components/LoadingSpinner';
 import {
   ChatBubbleLeftRightIcon,
   PlusIcon,
-  PinIcon,
+  BookmarkIcon,
   CheckIcon,
 } from '@heroicons/react/24/outline';
 import { Link } from 'react-router-dom';
@@ -135,7 +135,7 @@ const Communications = () => {
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-2">
                       {discussion.is_pinned && (
-                        <PinIcon className="h-4 w-4 text-primary-600" />
+                        <BookmarkIcon className="h-4 w-4 text-primary-600" />
                       )}
                       <h3 className="text-lg font-semibold text-gray-900">
                         {discussion.title}
@@ -270,7 +270,7 @@ const Communications = () => {
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-2">
                   {selectedDiscussion.is_pinned && (
-                    <PinIcon className="h-5 w-5 text-primary-600" />
+                    <BookmarkIcon className="h-5 w-5 text-primary-600" />
                   )}
                   <h2 className="text-2xl font-bold text-gray-900">
                     {selectedDiscussion.title}
