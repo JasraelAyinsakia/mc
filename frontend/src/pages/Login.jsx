@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'react-toastify';
@@ -12,6 +12,18 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    // Check if user was logged out due to inactivity
+    const logoutReason = sessionStorage.getItem('logoutReason');
+    if (logoutReason === 'inactivity') {
+      toast.info('You were logged out due to inactivity. Please log in to continue.', {
+        autoClose: 5000,
+      });
+      // Clear the reason so it doesn't show again
+      sessionStorage.removeItem('logoutReason');
+    }
+  }, []);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -28,8 +40,13 @@ const Login = () => {
     try {
       const result = await login(formData);
       if (result.success) {
-        toast.success('Login successful!');
-        navigate('/dashboard');
+        if (result.wasInactive) {
+          toast.success('Welcome back! Resuming where you left off...');
+        } else {
+          toast.success('Login successful!');
+        }
+        // Navigate to return path or dashboard
+        navigate(result.returnPath || '/dashboard');
       } else {
         toast.error(result.error || 'Login failed');
       }

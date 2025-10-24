@@ -17,10 +17,11 @@ class Config:
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     
     # Session configuration
-    PERMANENT_SESSION_LIFETIME = timedelta(days=7)
+    PERMANENT_SESSION_LIFETIME = timedelta(minutes=30)  # Backend session lasts 30 minutes (frontend enforces 10)
     SESSION_COOKIE_SECURE = True  # Required for SameSite=None
     SESSION_COOKIE_HTTPONLY = True
     SESSION_COOKIE_SAMESITE = 'None'  # Allow cross-origin cookies
+    SESSION_COOKIE_MAX_AGE = 30 * 60  # 30 minutes in seconds
     
     # Application settings
     MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 16MB max file size
