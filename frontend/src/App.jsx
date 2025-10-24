@@ -16,6 +16,7 @@ import AdminPanel from './pages/AdminPanel';
 import Communications from './pages/Communications';
 import Feedback from './pages/Feedback';
 import RegionalStatistics from './pages/RegionalStatistics';
+import ManageComplaints from './pages/ManageComplaints';
 import LoadingSpinner from './components/LoadingSpinner';
 
 // Protected Route wrapper
@@ -100,6 +101,16 @@ function App() {
         <Route path="committee" element={<CommitteeDashboard />} />
         <Route path="communications" element={<Communications />} />
         <Route path="regional-statistics" element={<RegionalStatistics />} />
+        
+        {/* Complaints Management - Accessible by committee members, central committee, and overseers */}
+        <Route 
+          path="manage-complaints" 
+          element={
+            <ProtectedRoute requiredRoles={['committee_member', 'central_committee', 'overseer']}>
+              <ManageComplaints />
+            </ProtectedRoute>
+          } 
+        />
         
         {/* Admin Routes - Accessible by committee members, central committee, and overseers */}
         <Route 
