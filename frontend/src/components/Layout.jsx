@@ -10,6 +10,7 @@ import {
   Bars3Icon,
   XMarkIcon,
   UsersIcon,
+  ChatBubbleLeftRightIcon,
 } from '@heroicons/react/24/outline';
 import { notificationsAPI } from '../utils/api';
 
@@ -35,7 +36,10 @@ const Layout = () => {
   const navigation = [
     { name: 'Dashboard', href: '/dashboard', icon: HomeIcon },
     { name: 'Applications', href: '/applications', icon: DocumentTextIcon },
-    ...(isCommittee ? [{ name: 'Committee Portal', href: '/committee', icon: UsersIcon }] : []),
+    ...(isCommittee ? [
+      { name: 'Committee Portal', href: '/committee', icon: UsersIcon },
+      { name: 'Communications', href: '/communications', icon: ChatBubbleLeftRightIcon }
+    ] : []),
     ...((user?.role === 'central_committee' || user?.role === 'overseer') ? [{ name: 'Admin Panel', href: '/admin', icon: UsersIcon }] : []),
     { name: 'Notifications', href: '/notifications', icon: BellIcon, badge: unreadCount },
     { name: 'Profile', href: '/profile', icon: UserIcon },

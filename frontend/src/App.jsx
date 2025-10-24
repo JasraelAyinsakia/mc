@@ -13,6 +13,7 @@ import Profile from './pages/Profile';
 import CommitteeDashboard from './pages/CommitteeDashboard';
 import Notifications from './pages/Notifications';
 import AdminPanel from './pages/AdminPanel';
+import Communications from './pages/Communications';
 import LoadingSpinner from './components/LoadingSpinner';
 
 // Protected Route wrapper
@@ -90,6 +91,7 @@ function App() {
         
         {/* Committee Routes */}
         <Route path="committee" element={<CommitteeDashboard />} />
+        <Route path="communications" element={<Communications />} />
         
         {/* Admin Routes */}
         <Route path="admin" element={<AdminPanel />} />

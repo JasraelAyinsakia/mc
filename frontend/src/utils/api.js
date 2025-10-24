@@ -118,5 +118,15 @@ export const meetingsAPI = {
   delete: (id) => api.delete(`/meetings/meetings/${id}`),
 };
 
+// Discussions API
+export const discussionsAPI = {
+  create: (data) => api.post('/discussions/', data),
+  getAll: (params) => api.get('/discussions/', { params }),
+  getById: (id) => api.get(`/discussions/${id}`),
+  update: (id, data) => api.put(`/discussions/${id}`, data),
+  delete: (id) => api.delete(`/discussions/${id}`),
+  addReply: (id, data) => api.post(`/discussions/${id}/replies`, data),
+};
+
 export default api;
 
