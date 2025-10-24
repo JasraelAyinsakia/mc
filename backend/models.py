@@ -571,9 +571,9 @@ class CourtshipProgress(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
-    # Relationships
-    application = db.relationship('Application', backref='courtship_progress')
-    updated_by_user = db.relationship('User', foreign_keys=[last_updated_by])
+    # Relationships - using backref with unique name to avoid conflicts
+    application = db.relationship('Application', backref=db.backref('courtship_progress_records', lazy='dynamic'))
+    updated_by_user = db.relationship('User', foreign_keys=[last_updated_by], backref='courtship_updates')
     
     def to_dict(self, include_application=False):
         data = {
