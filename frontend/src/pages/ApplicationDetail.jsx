@@ -17,6 +17,11 @@ const ApplicationDetail = () => {
   const { isCommittee } = useAuth();
   const [application, setApplication] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [showStageModal, setShowStageModal] = useState(false);
+  const [showNotesModal, setShowNotesModal] = useState(false);
+  const [stageData, setStageData] = useState({ status: 'completed', next_stage: '', notes: '' });
+  const [notes, setNotes] = useState('');
+  const [updating, setUpdating] = useState(false);
 
   useEffect(() => {
     fetchApplication();
@@ -34,6 +39,50 @@ const ApplicationDetail = () => {
       setLoading(false);
     }
   };
+
+  const handleUpdateStage = async () => {
+    setUpdating(true);
+    try {
+      await applicationsAPI.updateStage(id, stageData);
+      toast.success('Stage updated successfully');
+      setShowStageModal(false);
+      fetchApplication();
+      setStageData({ status: 'completed', next_stage: '', notes: '' });
+    } catch (error) {
+      console.error('Error updating stage:', error);
+      toast.error(error.response?.data?.error || 'Failed to update stage');
+    } finally {
+      setUpdating(false);
+    }
+  };
+
+  const handleAddNotes = async () => {
+    setUpdating(true);
+    try {
+      await applicationsAPI.updateStage(id, { notes, status: 'in_progress' });
+      toast.success('Notes added successfully');
+      setShowNotesModal(false);
+      fetchApplication();
+      setNotes('');
+    } catch (error) {
+      console.error('Error adding notes:', error);
+      toast.error(error.response?.data?.error || 'Failed to add notes');
+    } finally {
+      setUpdating(false);
+    }
+  };
+
+  const stages = [
+    'application_submitted',
+    'form_review',
+    'initial_interview',
+    'medical_tests',
+    'partner_interview',
+    'family_introduction',
+    'courtship',
+    'central_committee_review',
+    'approved'
+  ];
 
   if (loading) {
     return <LoadingSpinner />;
@@ -297,9 +346,133 @@ const ApplicationDetail = () => {
         <div className="card">
           <h2 className="text-xl font-semibold text-gray-900 mb-4">Committee Actions</h2>
           <div className="flex gap-4">
-            <button className="btn btn-primary">Update Stage</button>
-            <button className="btn btn-outline">Add Notes</button>
-            <button className="btn btn-outline">Schedule Meeting</button>
+            <button onClick={() => setShowStageModal(true)} className="btn btn-primary">
+              Update Stage
+            </button>
+            <button onClick={() => setShowNotesModal(true)} className="btn btn-outline">
+              Add Notes
+            </button>
+            <button
+              onClick={() => toast.info('Meeting scheduling coming soon!')}
+              className="btn btn-outline"
+            >
+              Schedule Meeting
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Update Stage Modal */}
+      {showStageModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg max-w-md w-full p-6">
+            <h3 className="text-xl font-semibold mb-4">Update Application Stage</h3>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Current Stage Status
+                </label>
+                <select
+                  value={stageData.status}
+                  onChange={(e) => setStageData({ ...stageData, status: e.target.value })}
+                  className="input"
+                >
+                  <option value="completed">Complete Current Stage</option>
+                  <option value="in_progress">Keep In Progress</option>
+                  <option value="rejected">Reject</option>
+                </select>
+              </div>
+
+              {stageData.status === 'completed' && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Next Stage
+                  </label>
+                  <select
+                    value={stageData.next_stage}
+                    onChange={(e) => setStageData({ ...stageData, next_stage: e.target.value })}
+                    className="input"
+                  >
+                    <option value="">Select next stage</option>
+                    {stages.map((stage) => (
+                      <option key={stage} value={stage}>
+                        {stage.replace(/_/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase())}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Notes
+                </label>
+                <textarea
+                  value={stageData.notes}
+                  onChange={(e) => setStageData({ ...stageData, notes: e.target.value })}
+                  rows="4"
+                  className="input"
+                  placeholder="Add any notes or comments..."
+                />
+              </div>
+
+              <div className="flex gap-3 mt-6">
+                <button
+                  onClick={() => setShowStageModal(false)}
+                  className="btn btn-outline flex-1"
+                  disabled={updating}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleUpdateStage}
+                  className="btn btn-primary flex-1"
+                  disabled={updating || (stageData.status === 'completed' && !stageData.next_stage)}
+                >
+                  {updating ? 'Updating...' : 'Update Stage'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add Notes Modal */}
+      {showNotesModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg max-w-md w-full p-6">
+            <h3 className="text-xl font-semibold mb-4">Add Notes</h3>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Notes
+                </label>
+                <textarea
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  rows="6"
+                  className="input"
+                  placeholder="Add notes about this application..."
+                />
+              </div>
+
+              <div className="flex gap-3 mt-6">
+                <button
+                  onClick={() => setShowNotesModal(false)}
+                  className="btn btn-outline flex-1"
+                  disabled={updating}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleAddNotes}
+                  className="btn btn-primary flex-1"
+                  disabled={updating || !notes.trim()}
+                >
+                  {updating ? 'Adding...' : 'Add Notes'}
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}
