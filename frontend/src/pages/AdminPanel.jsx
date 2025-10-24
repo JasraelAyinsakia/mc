@@ -2,18 +2,25 @@ import React, { useEffect, useState } from 'react';
 import { adminAPI } from '../utils/api';
 import { toast } from 'react-toastify';
 import LoadingSpinner from '../components/LoadingSpinner';
+import { useAuth } from '../context/AuthContext';
 import {
   PlusIcon,
   PencilIcon,
   TrashIcon,
   KeyIcon,
+  MagnifyingGlassIcon,
 } from '@heroicons/react/24/outline';
 
 const AdminPanel = () => {
-  const [users, setUsers] = useState([]);
+  const { user: currentUser } = useAuth();
+  const [usersByRegion, setUsersByRegion] = useState({});
+  const [filteredUsers, setFilteredUsers] = useState({});
   const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [roleFilter, setRoleFilter] = useState('all');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showPermissionsInfo, setShowPermissionsInfo] = useState(false);
+  const [expandedRegion, setExpandedRegion] = useState(null);
   const [formData, setFormData] = useState({
     email: '',
     username: '',
@@ -22,8 +29,8 @@ const AdminPanel = () => {
     phone: '',
     gender: 'male',
     role: 'committee_member',
-    region: '',
-    division: '',
+    region: currentUser?.region || '',
+    division: currentUser?.division || '',
     local_church: '',
   });
 
@@ -69,8 +76,9 @@ const AdminPanel = () => {
 
   const fetchUsers = async () => {
     try {
-      const response = await adminAPI.getUsers();
-      setUsers(response.data.users);
+      const response = await adminAPI.getUsersByRegion();
+      setUsersByRegion(response.data.users_by_region);
+      setFilteredUsers(response.data.users_by_region);
     } catch (error) {
       console.error('Error fetching users:', error);
       toast.error('Failed to load users');
@@ -78,6 +86,34 @@ const AdminPanel = () => {
       setLoading(false);
     }
   };
+
+  // Filter users based on search and role
+  useEffect(() => {
+    if (!usersByRegion) return;
+
+    let filtered = {};
+    
+    Object.keys(usersByRegion).forEach(region => {
+      const users = usersByRegion[region].filter(user => {
+        // Search filter
+        const matchesSearch = !searchQuery || 
+          user.full_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          user.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          user.username?.toLowerCase().includes(searchQuery.toLowerCase());
+        
+        // Role filter
+        const matchesRole = roleFilter === 'all' || user.role === roleFilter;
+        
+        return matchesSearch && matchesRole;
+      });
+      
+      if (users.length > 0) {
+        filtered[region] = users;
+      }
+    });
+    
+    setFilteredUsers(filtered);
+  }, [searchQuery, roleFilter, usersByRegion]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -165,80 +201,145 @@ const AdminPanel = () => {
         </div>
       </div>
 
-      {/* Users Table */}
-      <div className="card overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  User
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Role
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Location
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Status
-                </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {users.map((user) => (
-                <tr key={user.id}>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div>
-                      <div className="text-sm font-medium text-gray-900">
-                        {user.full_name}
-                      </div>
-                      <div className="text-sm text-gray-500">{user.email}</div>
-                      <div className="text-xs text-gray-400">@{user.username}</div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span
-                      className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getRoleBadge(
-                        user.role
-                      )}`}
-                    >
-                      {user.role.replace('_', ' ')}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    <div>{user.local_church}</div>
-                    <div className="text-xs">{user.region}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span
-                      className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                        user.is_active
-                          ? 'bg-green-100 text-green-800'
-                          : 'bg-red-100 text-red-800'
-                      }`}
-                    >
-                      {user.is_active ? 'Active' : 'Inactive'}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <button
-                      onClick={() => handleDeactivate(user.id, user.username)}
-                      className="text-red-600 hover:text-red-900 ml-4"
-                      title="Deactivate user"
-                    >
-                      <TrashIcon className="h-5 w-5" />
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+      {/* Search and Filter */}
+      <div className="card">
+        <div className="grid md:grid-cols-2 gap-4">
+          <div className="relative">
+            <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search by name, email, or username..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="input pl-10"
+            />
+          </div>
+          <div>
+            <select
+              value={roleFilter}
+              onChange={(e) => setRoleFilter(e.target.value)}
+              className="input"
+            >
+              <option value="all">All Roles</option>
+              <option value="single">Singles</option>
+              <option value="committee_member">Committee Members</option>
+              <option value="central_committee">Central Committee</option>
+              <option value="overseer">Overseers</option>
+            </select>
+          </div>
         </div>
       </div>
+
+      {/* Users by Region */}
+      {loading ? (
+        <LoadingSpinner />
+      ) : Object.keys(filteredUsers).length === 0 ? (
+        <div className="card text-center py-12">
+          <p className="text-gray-500">No users found matching your criteria.</p>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {Object.keys(filteredUsers).sort().map((region) => (
+            <div key={region} className="card overflow-hidden">
+              <button
+                onClick={() => setExpandedRegion(expandedRegion === region ? null : region)}
+                className="w-full px-6 py-4 flex justify-between items-center bg-gray-50 hover:bg-gray-100 transition-colors"
+              >
+                <div className="flex items-center">
+                  <h3 className="text-lg font-semibold text-gray-900">{region}</h3>
+                  <span className="ml-3 px-3 py-1 bg-primary-100 text-primary-800 rounded-full text-sm font-medium">
+                    {filteredUsers[region].length} users
+                  </span>
+                </div>
+                <svg
+                  className={`h-6 w-6 text-gray-500 transition-transform ${
+                    expandedRegion === region ? 'transform rotate-180' : ''
+                  }`}
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+
+              {expandedRegion === region && (
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          User
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Role
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Division/Church
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Status
+                        </th>
+                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Actions
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {filteredUsers[region].map((user) => (
+                        <tr key={user.id} className="hover:bg-gray-50">
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div>
+                              <div className="text-sm font-medium text-gray-900">
+                                {user.full_name}
+                              </div>
+                              <div className="text-sm text-gray-500">{user.email}</div>
+                              <div className="text-xs text-gray-400">@{user.username}</div>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span
+                              className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getRoleBadge(
+                                user.role
+                              )}`}
+                            >
+                              {user.role.replace('_', ' ')}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            <div>{user.division || 'N/A'}</div>
+                            <div className="text-xs">{user.local_church}</div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span
+                              className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                                user.is_active
+                                  ? 'bg-green-100 text-green-800'
+                                  : 'bg-red-100 text-red-800'
+                              }`}
+                            >
+                              {user.is_active ? 'Active' : 'Inactive'}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                            <button
+                              onClick={() => handleDeactivate(user.id, user.username)}
+                              className="text-red-600 hover:text-red-900 ml-4"
+                              title="Deactivate user"
+                            >
+                              <TrashIcon className="h-5 w-5" />
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Create User Modal */}
       {showCreateModal && (

@@ -7,10 +7,10 @@ from functools import wraps
 admin_bp = Blueprint('admin', __name__)
 
 def admin_required(f):
-    """Decorator to require admin/central committee role"""
+    """Decorator to require admin/central committee/committee member role"""
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        if current_user.role not in ['central_committee', 'overseer']:
+        if current_user.role not in ['committee_member', 'central_committee', 'overseer']:
             return jsonify({'error': 'Admin access required'}), 403
         return f(*args, **kwargs)
     return decorated_function
@@ -20,18 +20,26 @@ def admin_required(f):
 @login_required
 @admin_required
 def get_users():
-    """Get all users (admin only)"""
+    """Get all users - filtered by region for committee members"""
     page = request.args.get('page', 1, type=int)
-    per_page = request.args.get('per_page', 20, type=int)
+    per_page = request.args.get('per_page', 100, type=int)
     role_filter = request.args.get('role', '')
+    region_filter = request.args.get('region', '')
     
     query = User.query
+    
+    # Committee members can only see users from their region
+    if current_user.role == 'committee_member':
+        query = query.filter_by(region=current_user.region)
+    # Central committee and overseers can filter by region or see all
+    elif region_filter:
+        query = query.filter_by(region=region_filter)
     
     if role_filter:
         query = query.filter_by(role=role_filter)
     
-    # Order by most recent
-    query = query.order_by(User.created_at.desc())
+    # Order by region, then role, then name
+    query = query.order_by(User.region, User.role, User.full_name)
     
     # Paginate
     pagination = query.paginate(page=page, per_page=per_page, error_out=False)
@@ -46,11 +54,40 @@ def get_users():
     }), 200
 
 
+@admin_bp.route('/users/by-region', methods=['GET'])
+@login_required
+@admin_required
+def get_users_by_region():
+    """Get users grouped by region"""
+    
+    query = User.query
+    
+    # Committee members can only see their region
+    if current_user.role == 'committee_member':
+        query = query.filter_by(region=current_user.region)
+    
+    # Get all users
+    users = query.order_by(User.region, User.role, User.full_name).all()
+    
+    # Group by region
+    users_by_region = {}
+    for user in users:
+        region = user.region or 'No Region'
+        if region not in users_by_region:
+            users_by_region[region] = []
+        users_by_region[region].append(user.to_dict())
+    
+    return jsonify({
+        'users_by_region': users_by_region,
+        'regions': list(users_by_region.keys())
+    }), 200
+
+
 @admin_bp.route('/users', methods=['POST'])
 @login_required
 @admin_required
 def create_user():
-    """Create a new user (admin only)"""
+    """Create a new user"""
     data = request.get_json()
     
     # Validate required fields
@@ -59,6 +96,10 @@ def create_user():
         if field not in data:
             return jsonify({'error': f'Missing required field: {field}'}), 400
     
+    # Committee members can only create users in their region
+    if current_user.role == 'committee_member' and data['region'] != current_user.region:
+        return jsonify({'error': 'You can only create users in your region'}), 403
+    
     # Check if user already exists
     if User.query.filter_by(email=data['email']).first():
         return jsonify({'error': 'Email already registered'}), 400
@@ -66,10 +107,13 @@ def create_user():
     if User.query.filter_by(username=data['username']).first():
         return jsonify({'error': 'Username already taken'}), 400
     
-    # Validate role
+    # Validate role - committee members can't create central committee or overseers
     valid_roles = ['single', 'committee_member', 'central_committee', 'overseer']
     if data['role'] not in valid_roles:
         return jsonify({'error': f'Invalid role. Must be one of: {", ".join(valid_roles)}'}), 400
+    
+    if current_user.role == 'committee_member' and data['role'] in ['central_committee', 'overseer']:
+        return jsonify({'error': 'You do not have permission to create central committee or overseer accounts'}), 403
     
     # Create new user
     user = User(

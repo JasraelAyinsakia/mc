@@ -43,7 +43,7 @@ const Layout = () => {
       { name: 'Communications', href: '/communications', icon: ChatBubbleLeftRightIcon },
       { name: 'Regional Statistics', href: '/regional-statistics', icon: ChartBarIcon }
     ] : []),
-    ...((user?.role === 'central_committee' || user?.role === 'overseer') ? [{ name: 'Admin Panel', href: '/admin', icon: UsersIcon }] : []),
+    ...(isCommittee ? [{ name: 'Admin Panel', href: '/admin', icon: UsersIcon }] : []),
     { name: 'Feedback & Complaints', href: '/feedback', icon: MegaphoneIcon },
     { name: 'Notifications', href: '/notifications', icon: BellIcon, badge: unreadCount },
     { name: 'Profile', href: '/profile', icon: UserIcon },

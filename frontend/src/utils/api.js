@@ -126,6 +126,7 @@ export const notificationsAPI = {
 // Admin API
 export const adminAPI = {
   getUsers: (params) => api.get('/admin/users', { params }),
+  getUsersByRegion: () => api.get('/admin/users/by-region'),
   createUser: (data) => api.post('/admin/users', data),
   updateUser: (id, data) => api.put(`/admin/users/${id}`, data),
   resetPassword: (id, data) => api.post(`/admin/users/${id}/reset-password`, data),

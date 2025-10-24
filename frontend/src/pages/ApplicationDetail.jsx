@@ -766,10 +766,14 @@ const ApplicationDetail = () => {
                   <input
                     type="number"
                     value={meetingData.duration_minutes}
-                    onChange={(e) => setMeetingData({ ...meetingData, duration_minutes: parseInt(e.target.value) || 60 })}
+                    onChange={(e) => {
+                      const value = e.target.value === '' ? '' : parseInt(e.target.value) || 0;
+                      setMeetingData({ ...meetingData, duration_minutes: value });
+                    }}
                     className="input"
                     min="15"
                     step="15"
+                    placeholder="60"
                   />
                 </div>
 

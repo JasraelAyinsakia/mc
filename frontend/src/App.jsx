@@ -19,7 +19,7 @@ import RegionalStatistics from './pages/RegionalStatistics';
 import LoadingSpinner from './components/LoadingSpinner';
 
 // Protected Route wrapper
-const ProtectedRoute = ({ children, requiredRole = null }) => {
+const ProtectedRoute = ({ children, requiredRole = null, requiredRoles = null }) => {
   const { isAuthenticated, user, loading } = useAuth();
 
   if (loading) {
@@ -31,6 +31,10 @@ const ProtectedRoute = ({ children, requiredRole = null }) => {
   }
 
   if (requiredRole && user?.role !== requiredRole) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  if (requiredRoles && !requiredRoles.includes(user?.role)) {
     return <Navigate to="/dashboard" replace />;
   }
 
@@ -97,8 +101,15 @@ function App() {
         <Route path="communications" element={<Communications />} />
         <Route path="regional-statistics" element={<RegionalStatistics />} />
         
-        {/* Admin Routes */}
-        <Route path="admin" element={<AdminPanel />} />
+        {/* Admin Routes - Accessible by committee members, central committee, and overseers */}
+        <Route 
+          path="admin" 
+          element={
+            <ProtectedRoute requiredRoles={['committee_member', 'central_committee', 'overseer']}>
+              <AdminPanel />
+            </ProtectedRoute>
+          } 
+        />
       </Route>
 
       {/* 404 */}
