@@ -11,7 +11,10 @@ def create_app(config_name='development'):
     
     # Initialize extensions
     db.init_app(app)
-    CORS(app, supports_credentials=True, origins=['http://localhost:3001'])
+    CORS(app, supports_credentials=True, origins=[
+        'http://localhost:3001',
+        'https://mc-one-tau.vercel.app'
+    ])
     
     # Initialize Flask-Login
     login_manager = LoginManager()
