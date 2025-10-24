@@ -26,10 +26,33 @@ api.interceptors.response.use(
     return response;
   },
   (error) => {
+    // Handle network errors
+    if (!error.response) {
+      console.error('Network error:', error.message);
+      // Redirect to login page on network error (backend might be down)
+      if (window.location.pathname !== '/login' && window.location.pathname !== '/register') {
+        window.location.href = '/login';
+      }
+      return Promise.reject(error);
+    }
+
+    // Handle authentication errors
     if (error.response?.status === 401) {
-      // Redirect to login if unauthorized
+      console.error('Authentication error - redirecting to login');
+      localStorage.removeItem('user'); // Clear any stale user data
       window.location.href = '/login';
     }
+
+    // Handle forbidden errors
+    if (error.response?.status === 403) {
+      console.error('Forbidden - insufficient permissions');
+    }
+
+    // Handle server errors
+    if (error.response?.status >= 500) {
+      console.error('Server error:', error.response?.data?.error || 'Internal server error');
+    }
+
     return Promise.reject(error);
   }
 );
@@ -126,6 +149,15 @@ export const discussionsAPI = {
   update: (id, data) => api.put(`/discussions/${id}`, data),
   delete: (id) => api.delete(`/discussions/${id}`),
   addReply: (id, data) => api.post(`/discussions/${id}/replies`, data),
+};
+
+// Complaints API
+export const complaintsAPI = {
+  submit: (data) => api.post('/complaints/', data),
+  getAll: (params) => api.get('/complaints/', { params }),
+  getById: (id) => api.get(`/complaints/${id}`),
+  update: (id, data) => api.put(`/complaints/${id}`, data),
+  getMyComplaints: () => api.get('/complaints/my-complaints'),
 };
 
 export default api;

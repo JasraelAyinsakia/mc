@@ -43,6 +43,7 @@ def create_app(config_name=None):
     from routes.admin import admin_bp
     from routes.meetings import meetings_bp
     from routes.discussions import discussions_bp
+    from routes.complaints import complaints_bp
     
     app.register_blueprint(auth_bp, url_prefix='/api/auth')
     app.register_blueprint(applications_bp, url_prefix='/api/applications')
@@ -54,6 +55,7 @@ def create_app(config_name=None):
     app.register_blueprint(admin_bp, url_prefix='/api/admin')
     app.register_blueprint(meetings_bp, url_prefix='/api/meetings')
     app.register_blueprint(discussions_bp, url_prefix='/api/discussions')
+    app.register_blueprint(complaints_bp, url_prefix='/api/complaints')
     
     # Error handlers
     @app.errorhandler(404)

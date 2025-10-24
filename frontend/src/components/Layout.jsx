@@ -11,6 +11,7 @@ import {
   XMarkIcon,
   UsersIcon,
   ChatBubbleLeftRightIcon,
+  MegaphoneIcon,
 } from '@heroicons/react/24/outline';
 import { notificationsAPI } from '../utils/api';
 
@@ -41,6 +42,7 @@ const Layout = () => {
       { name: 'Communications', href: '/communications', icon: ChatBubbleLeftRightIcon }
     ] : []),
     ...((user?.role === 'central_committee' || user?.role === 'overseer') ? [{ name: 'Admin Panel', href: '/admin', icon: UsersIcon }] : []),
+    { name: 'Feedback & Complaints', href: '/feedback', icon: MegaphoneIcon },
     { name: 'Notifications', href: '/notifications', icon: BellIcon, badge: unreadCount },
     { name: 'Profile', href: '/profile', icon: UserIcon },
   ];

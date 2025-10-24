@@ -14,6 +14,7 @@ import CommitteeDashboard from './pages/CommitteeDashboard';
 import Notifications from './pages/Notifications';
 import AdminPanel from './pages/AdminPanel';
 import Communications from './pages/Communications';
+import Feedback from './pages/Feedback';
 import LoadingSpinner from './components/LoadingSpinner';
 
 // Protected Route wrapper
@@ -88,6 +89,7 @@ function App() {
         <Route path="applications/:id/courtship" element={<CourtshipTopics />} />
         <Route path="profile" element={<Profile />} />
         <Route path="notifications" element={<Notifications />} />
+        <Route path="feedback" element={<Feedback />} />
         
         {/* Committee Routes */}
         <Route path="committee" element={<CommitteeDashboard />} />

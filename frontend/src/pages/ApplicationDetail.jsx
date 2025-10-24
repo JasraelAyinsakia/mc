@@ -160,6 +160,21 @@ const ApplicationDetail = () => {
     return <Icon className="h-5 w-5" />;
   };
 
+  const getStageDescription = (stage) => {
+    const descriptions = {
+      application_submitted: 'Your application has been received and is awaiting review.',
+      form_review: 'Your application form is being reviewed by the committee.',
+      initial_interview: 'You will be scheduled for an initial interview with the committee.',
+      medical_tests: 'Please complete the required medical tests and have results sent to your committee.',
+      partner_interview: 'Your partner will be interviewed by the committee.',
+      family_introduction: 'After the sister says yes, proceed with family introductions on both sides.',
+      courtship: 'You are in the courtship phase. Complete the 24-week courtship topics.',
+      central_committee_review: 'Your application is being reviewed by the Central Committee.',
+      approved: 'Congratulations! Your application has been approved.'
+    };
+    return descriptions[stage] || 'Processing your application...';
+  };
+
   return (
     <div className="max-w-5xl mx-auto space-y-6">
       {/* Header */}
@@ -190,6 +205,36 @@ const ApplicationDetail = () => {
           </span>
         </div>
       </div>
+
+      {/* Current Stage - Prominent Display */}
+      {!isCommittee && (
+        <div className="card bg-gradient-to-r from-primary-50 to-primary-100 border-2 border-primary-300">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-primary-600 mb-1">Your Current Stage</p>
+              <h2 className="text-2xl font-bold text-primary-900 capitalize">
+                {application.current_stage?.replace(/_/g, ' ')}
+              </h2>
+              <p className="text-sm text-primary-700 mt-2">
+                {getStageDescription(application.current_stage)}
+              </p>
+            </div>
+            <div className="text-right">
+              <span
+                className={`inline-block px-4 py-2 rounded-full text-sm font-semibold ${
+                  application.status === 'approved'
+                    ? 'bg-green-500 text-white'
+                    : application.status === 'rejected'
+                    ? 'bg-red-500 text-white'
+                    : 'bg-yellow-500 text-white'
+                }`}
+              >
+                {application.status.toUpperCase()}
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Progress Timeline */}
       <div className="card">

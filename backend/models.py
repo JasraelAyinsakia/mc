@@ -465,6 +465,58 @@ class DiscussionReply(db.Model):
         }
 
 
+class Complaint(db.Model):
+    """Anonymous complaints and feedback"""
+    __tablename__ = 'complaints'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    application_id = db.Column(db.Integer, db.ForeignKey('applications.id'), nullable=True)
+    
+    complaint_type = db.Column(db.String(50), nullable=False)  # delay, bias, process_issue, other
+    severity = db.Column(db.String(20), default='medium')  # low, medium, high, urgent
+    subject = db.Column(db.String(200), nullable=False)
+    description = db.Column(db.Text, nullable=False)
+    
+    # Routing - who should see this
+    send_to = db.Column(db.String(50), nullable=False)  # central_committee, regional_pastor, national_overseer
+    
+    # Anonymous by default, but we track for accountability
+    submitted_by_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
+    submitted_by = db.relationship('User', foreign_keys=[submitted_by_id])
+    
+    # Status tracking
+    status = db.Column(db.String(30), default='pending')  # pending, reviewed, investigating, resolved, dismissed
+    resolution_notes = db.Column(db.Text)
+    resolved_by_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
+    resolved_by = db.relationship('User', foreign_keys=[resolved_by_id])
+    resolved_at = db.Column(db.DateTime)
+    
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    def to_dict(self, show_submitter=False):
+        result = {
+            'id': self.id,
+            'application_id': self.application_id,
+            'complaint_type': self.complaint_type,
+            'severity': self.severity,
+            'subject': self.subject,
+            'description': self.description,
+            'send_to': self.send_to,
+            'status': self.status,
+            'resolution_notes': self.resolution_notes,
+            'resolved_at': self.resolved_at.isoformat() if self.resolved_at else None,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+        }
+        
+        # Only show submitter to authorized personnel
+        if show_submitter:
+            result['submitted_by'] = self.submitted_by.to_dict() if self.submitted_by else None
+            result['resolved_by'] = self.resolved_by.to_dict() if self.resolved_by else None
+        
+        return result
+
+
 class Notification(db.Model):
     """Notification system"""
     __tablename__ = 'notifications'
