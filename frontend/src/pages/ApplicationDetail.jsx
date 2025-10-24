@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { applicationsAPI } from '../utils/api';
+import { applicationsAPI, meetingsAPI } from '../utils/api';
 import { toast } from 'react-toastify';
 import LoadingSpinner from '../components/LoadingSpinner';
 import {
@@ -19,12 +19,25 @@ const ApplicationDetail = () => {
   const [loading, setLoading] = useState(true);
   const [showStageModal, setShowStageModal] = useState(false);
   const [showNotesModal, setShowNotesModal] = useState(false);
+  const [showMeetingModal, setShowMeetingModal] = useState(false);
   const [stageData, setStageData] = useState({ status: 'completed', next_stage: '', notes: '' });
   const [notes, setNotes] = useState('');
+  const [meetings, setMeetings] = useState([]);
+  const [meetingData, setMeetingData] = useState({
+    title: '',
+    description: '',
+    scheduled_date: '',
+    duration_minutes: 60,
+    location: '',
+    meeting_type: 'interview',
+    meeting_format: 'in_person',
+    attendees: '',
+  });
   const [updating, setUpdating] = useState(false);
 
   useEffect(() => {
     fetchApplication();
+    fetchMeetings();
   }, [id]);
 
   const fetchApplication = async () => {
@@ -37,6 +50,15 @@ const ApplicationDetail = () => {
       navigate('/applications');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchMeetings = async () => {
+    try {
+      const response = await meetingsAPI.getByApplication(id);
+      setMeetings(response.data.meetings || []);
+    } catch (error) {
+      console.error('Error fetching meetings:', error);
     }
   };
 
@@ -67,6 +89,31 @@ const ApplicationDetail = () => {
     } catch (error) {
       console.error('Error adding notes:', error);
       toast.error(error.response?.data?.error || 'Failed to add notes');
+    } finally {
+      setUpdating(false);
+    }
+  };
+
+  const handleScheduleMeeting = async () => {
+    setUpdating(true);
+    try {
+      await meetingsAPI.schedule(id, meetingData);
+      toast.success('Meeting scheduled successfully');
+      setShowMeetingModal(false);
+      fetchMeetings();
+      setMeetingData({
+        title: '',
+        description: '',
+        scheduled_date: '',
+        duration_minutes: 60,
+        location: '',
+        meeting_type: 'interview',
+        meeting_format: 'in_person',
+        attendees: '',
+      });
+    } catch (error) {
+      console.error('Error scheduling meeting:', error);
+      toast.error(error.response?.data?.error || 'Failed to schedule meeting');
     } finally {
       setUpdating(false);
     }
@@ -341,6 +388,52 @@ const ApplicationDetail = () => {
         </div>
       )}
 
+      {/* Scheduled Meetings */}
+      {meetings && meetings.length > 0 && (
+        <div className="card">
+          <h2 className="text-xl font-semibold text-gray-900 mb-4">Scheduled Meetings</h2>
+          <div className="space-y-4">
+            {meetings.map((meeting) => (
+              <div key={meeting.id} className="border-l-4 border-primary-500 pl-4 py-2">
+                <div className="flex justify-between items-start">
+                  <div className="flex-1">
+                    <h3 className="font-medium text-gray-900">{meeting.title}</h3>
+                    {meeting.description && (
+                      <p className="text-sm text-gray-600 mt-1">{meeting.description}</p>
+                    )}
+                    <div className="flex gap-4 mt-2 text-sm text-gray-500">
+                      <span>
+                        📅 {new Date(meeting.scheduled_date).toLocaleDateString()} at{' '}
+                        {new Date(meeting.scheduled_date).toLocaleTimeString([], {
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })}
+                      </span>
+                      <span>⏱️ {meeting.duration_minutes} min</span>
+                      <span className="capitalize">📍 {meeting.meeting_format.replace('_', ' ')}</span>
+                    </div>
+                    {meeting.location && (
+                      <p className="text-sm text-gray-500 mt-1">Location: {meeting.location}</p>
+                    )}
+                  </div>
+                  <span
+                    className={`px-3 py-1 rounded-full text-xs font-medium ${
+                      meeting.status === 'completed'
+                        ? 'bg-green-100 text-green-800'
+                        : meeting.status === 'cancelled'
+                        ? 'bg-red-100 text-red-800'
+                        : 'bg-blue-100 text-blue-800'
+                    }`}
+                  >
+                    {meeting.status}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Actions */}
       {isCommittee && (
         <div className="card">
@@ -353,7 +446,7 @@ const ApplicationDetail = () => {
               Add Notes
             </button>
             <button
-              onClick={() => toast.info('Meeting scheduling coming soon!')}
+              onClick={() => setShowMeetingModal(true)}
               className="btn btn-outline"
             >
               Schedule Meeting
@@ -470,6 +563,145 @@ const ApplicationDetail = () => {
                   disabled={updating || !notes.trim()}
                 >
                   {updating ? 'Adding...' : 'Add Notes'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Schedule Meeting Modal */}
+      {showMeetingModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg max-w-2xl w-full p-6 max-h-[90vh] overflow-y-auto">
+            <h3 className="text-xl font-semibold mb-4">Schedule Meeting</h3>
+            <div className="space-y-4">
+              <div className="grid md:grid-cols-2 gap-4">
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Meeting Title *
+                  </label>
+                  <input
+                    type="text"
+                    value={meetingData.title}
+                    onChange={(e) => setMeetingData({ ...meetingData, title: e.target.value })}
+                    className="input"
+                    placeholder="e.g., Initial Interview"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Meeting Type *
+                  </label>
+                  <select
+                    value={meetingData.meeting_type}
+                    onChange={(e) => setMeetingData({ ...meetingData, meeting_type: e.target.value })}
+                    className="input"
+                  >
+                    <option value="interview">Interview</option>
+                    <option value="review">Review</option>
+                    <option value="introduction">Family Introduction</option>
+                    <option value="check_in">Check-In</option>
+                    <option value="final_approval">Final Approval</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Meeting Format *
+                  </label>
+                  <select
+                    value={meetingData.meeting_format}
+                    onChange={(e) => setMeetingData({ ...meetingData, meeting_format: e.target.value })}
+                    className="input"
+                  >
+                    <option value="in_person">In Person</option>
+                    <option value="phone">Phone Call</option>
+                    <option value="video">Video Call</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Date & Time *
+                  </label>
+                  <input
+                    type="datetime-local"
+                    value={meetingData.scheduled_date}
+                    onChange={(e) => setMeetingData({ ...meetingData, scheduled_date: e.target.value })}
+                    className="input"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Duration (minutes)
+                  </label>
+                  <input
+                    type="number"
+                    value={meetingData.duration_minutes}
+                    onChange={(e) => setMeetingData({ ...meetingData, duration_minutes: parseInt(e.target.value) || 60 })}
+                    className="input"
+                    min="15"
+                    step="15"
+                  />
+                </div>
+
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Location
+                  </label>
+                  <input
+                    type="text"
+                    value={meetingData.location}
+                    onChange={(e) => setMeetingData({ ...meetingData, location: e.target.value })}
+                    className="input"
+                    placeholder="e.g., Church Office, Zoom Link, Phone Number"
+                  />
+                </div>
+
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Attendees
+                  </label>
+                  <input
+                    type="text"
+                    value={meetingData.attendees}
+                    onChange={(e) => setMeetingData({ ...meetingData, attendees: e.target.value })}
+                    className="input"
+                    placeholder="e.g., Applicant, Partner, Committee Members"
+                  />
+                </div>
+
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Description
+                  </label>
+                  <textarea
+                    value={meetingData.description}
+                    onChange={(e) => setMeetingData({ ...meetingData, description: e.target.value })}
+                    rows="3"
+                    className="input"
+                    placeholder="Additional details about the meeting..."
+                  />
+                </div>
+              </div>
+
+              <div className="flex gap-3 mt-6">
+                <button
+                  onClick={() => setShowMeetingModal(false)}
+                  className="btn btn-outline flex-1"
+                  disabled={updating}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleScheduleMeeting}
+                  className="btn btn-primary flex-1"
+                  disabled={updating || !meetingData.title || !meetingData.scheduled_date}
+                >
+                  {updating ? 'Scheduling...' : 'Schedule Meeting'}
                 </button>
               </div>
             </div>

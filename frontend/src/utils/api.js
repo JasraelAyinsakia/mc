@@ -109,5 +109,14 @@ export const adminAPI = {
   getStats: () => api.get('/admin/stats/overview'),
 };
 
+// Meetings API
+export const meetingsAPI = {
+  schedule: (applicationId, data) => api.post(`/meetings/applications/${applicationId}/meetings`, data),
+  getByApplication: (applicationId) => api.get(`/meetings/applications/${applicationId}/meetings`),
+  getById: (id) => api.get(`/meetings/meetings/${id}`),
+  update: (id, data) => api.put(`/meetings/meetings/${id}`, data),
+  delete: (id) => api.delete(`/meetings/meetings/${id}`),
+};
+
 export default api;
 

@@ -41,6 +41,7 @@ def create_app(config_name=None):
     from routes.dashboard import dashboard_bp
     from routes.notifications import notifications_bp
     from routes.admin import admin_bp
+    from routes.meetings import meetings_bp
     
     app.register_blueprint(auth_bp, url_prefix='/api/auth')
     app.register_blueprint(applications_bp, url_prefix='/api/applications')
@@ -50,6 +51,7 @@ def create_app(config_name=None):
     app.register_blueprint(dashboard_bp, url_prefix='/api/dashboard')
     app.register_blueprint(notifications_bp, url_prefix='/api/notifications')
     app.register_blueprint(admin_bp, url_prefix='/api/admin')
+    app.register_blueprint(meetings_bp, url_prefix='/api/meetings')
     
     # Error handlers
     @app.errorhandler(404)

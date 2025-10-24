@@ -118,6 +118,7 @@ class Application(db.Model):
     medical_tests = db.relationship('MedicalTest', backref='application', lazy=True, cascade='all, delete-orphan')
     courtship_progress = db.relationship('CourtshipProgress', backref='application', lazy=True, cascade='all, delete-orphan')
     check_ins = db.relationship('CheckIn', backref='application', lazy=True, cascade='all, delete-orphan')
+    meetings = db.relationship('Meeting', backref='application', lazy=True, cascade='all, delete-orphan')
     documents = db.relationship('Document', backref='application', lazy=True, cascade='all, delete-orphan')
     
     def to_dict(self):
@@ -261,6 +262,58 @@ class CourtshipProgress(db.Model):
             'couple_notes': self.couple_notes,
             'counselor_notes': self.counselor_notes,
             'reviewed': self.reviewed
+        }
+
+
+class Meeting(db.Model):
+    """Meetings scheduled for applications"""
+    __tablename__ = 'meetings'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    application_id = db.Column(db.Integer, db.ForeignKey('applications.id'), nullable=False)
+    
+    title = db.Column(db.String(200), nullable=False)
+    description = db.Column(db.Text)
+    scheduled_date = db.Column(db.DateTime, nullable=False)
+    duration_minutes = db.Column(db.Integer, default=60)
+    location = db.Column(db.String(200))
+    
+    meeting_type = db.Column(db.String(50), nullable=False)  # interview, review, introduction, check_in, final_approval
+    meeting_format = db.Column(db.String(30), default='in_person')  # in_person, phone, video
+    
+    status = db.Column(db.String(30), default='scheduled')  # scheduled, completed, cancelled, rescheduled
+    
+    # Attendees
+    attendees = db.Column(db.Text)  # JSON string of attendee names/roles
+    
+    # Meeting outcome
+    notes = db.Column(db.Text)
+    outcome = db.Column(db.String(50))  # approved, pending, rejected, needs_follow_up
+    
+    # Organized by
+    organized_by_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+    organized_by = db.relationship('User', foreign_keys=[organized_by_id])
+    
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'application_id': self.application_id,
+            'title': self.title,
+            'description': self.description,
+            'scheduled_date': self.scheduled_date.isoformat() if self.scheduled_date else None,
+            'duration_minutes': self.duration_minutes,
+            'location': self.location,
+            'meeting_type': self.meeting_type,
+            'meeting_format': self.meeting_format,
+            'status': self.status,
+            'attendees': self.attendees,
+            'notes': self.notes,
+            'outcome': self.outcome,
+            'organized_by': self.organized_by.to_dict() if self.organized_by else None,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
         }
 
 
