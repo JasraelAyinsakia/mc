@@ -12,6 +12,7 @@ import {
   UsersIcon,
   ChatBubbleLeftRightIcon,
   MegaphoneIcon,
+  ChartBarIcon,
 } from '@heroicons/react/24/outline';
 import { notificationsAPI } from '../utils/api';
 
@@ -39,7 +40,8 @@ const Layout = () => {
     { name: 'Applications', href: '/applications', icon: DocumentTextIcon },
     ...(isCommittee ? [
       { name: 'Committee Portal', href: '/committee', icon: UsersIcon },
-      { name: 'Communications', href: '/communications', icon: ChatBubbleLeftRightIcon }
+      { name: 'Communications', href: '/communications', icon: ChatBubbleLeftRightIcon },
+      { name: 'Regional Statistics', href: '/regional-statistics', icon: ChartBarIcon }
     ] : []),
     ...((user?.role === 'central_committee' || user?.role === 'overseer') ? [{ name: 'Admin Panel', href: '/admin', icon: UsersIcon }] : []),
     { name: 'Feedback & Complaints', href: '/feedback', icon: MegaphoneIcon },

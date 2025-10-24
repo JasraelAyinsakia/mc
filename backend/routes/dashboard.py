@@ -252,3 +252,121 @@ def get_courtship_completion():
     
     return jsonify({'courtship_data': results}), 200
 
+
+@dashboard_bp.route('/regional-statistics', methods=['GET'])
+@login_required
+def get_regional_statistics():
+    """Get statistics by region - singles count and applications"""
+    
+    if current_user.role not in ['committee_member', 'central_committee', 'overseer']:
+        return jsonify({'error': 'Unauthorized'}), 403
+    
+    # Committee members see only their region
+    # Central committee and overseers see all regions
+    region_filter = None
+    if current_user.role == 'committee_member':
+        region_filter = current_user.region
+    
+    # Build query for regions
+    query = db.session.query(
+        User.region,
+        func.count(func.distinct(User.id)).label('total_singles'),
+        func.count(func.distinct(Application.id)).label('total_applications')
+    ).outerjoin(
+        Application, Application.applicant_id == User.id
+    ).filter(
+        User.role == 'single',
+        User.region.isnot(None),
+        User.is_active == True
+    )
+    
+    # Apply region filter for committee members
+    if region_filter:
+        query = query.filter(User.region == region_filter)
+    
+    # Group by region
+    query = query.group_by(User.region).order_by(User.region)
+    
+    results = query.all()
+    
+    regional_data = []
+    for region, singles_count, apps_count in results:
+        # Get breakdown by application status for this region
+        status_query = db.session.query(
+            Application.status,
+            func.count(Application.id)
+        ).join(
+            User, Application.applicant_id == User.id
+        ).filter(
+            User.region == region,
+            User.role == 'single'
+        ).group_by(Application.status).all()
+        
+        status_breakdown = {status: count for status, count in status_query}
+        
+        # Get breakdown by division within this region
+        divisions_query = db.session.query(
+            User.division,
+            func.count(func.distinct(User.id)).label('singles_count')
+        ).filter(
+            User.role == 'single',
+            User.region == region,
+            User.division.isnot(None),
+            User.is_active == True
+        ).group_by(User.division).order_by(User.division).all()
+        
+        divisions_data = [
+            {'division': div, 'singles_count': count}
+            for div, count in divisions_query
+        ]
+        
+        # Get singles by gender
+        gender_query = db.session.query(
+            User.gender,
+            func.count(User.id)
+        ).filter(
+            User.role == 'single',
+            User.region == region,
+            User.is_active == True
+        ).group_by(User.gender).all()
+        
+        gender_breakdown = {gender: count for gender, count in gender_query if gender}
+        
+        regional_data.append({
+            'region': region,
+            'total_singles': singles_count,
+            'total_applications': apps_count,
+            'brothers': gender_breakdown.get('male', 0),
+            'sisters': gender_breakdown.get('female', 0),
+            'applications_by_status': {
+                'pending': status_breakdown.get('pending', 0),
+                'approved': status_breakdown.get('approved', 0),
+                'rejected': status_breakdown.get('rejected', 0),
+                'on_hold': status_breakdown.get('on_hold', 0)
+            },
+            'divisions': divisions_data
+        })
+    
+    # Get overall summary
+    if not region_filter:
+        total_singles = User.query.filter_by(role='single', is_active=True).count()
+        total_applications = Application.query.count()
+    else:
+        total_singles = User.query.filter_by(
+            role='single',
+            region=region_filter,
+            is_active=True
+        ).count()
+        total_applications = Application.query.join(
+            User, Application.applicant_id == User.id
+        ).filter(User.region == region_filter).count()
+    
+    return jsonify({
+        'regional_data': regional_data,
+        'summary': {
+            'total_singles': total_singles,
+            'total_applications': total_applications,
+            'total_regions': len(regional_data)
+        }
+    }), 200
+

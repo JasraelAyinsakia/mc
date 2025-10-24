@@ -15,6 +15,7 @@ import Notifications from './pages/Notifications';
 import AdminPanel from './pages/AdminPanel';
 import Communications from './pages/Communications';
 import Feedback from './pages/Feedback';
+import RegionalStatistics from './pages/RegionalStatistics';
 import LoadingSpinner from './components/LoadingSpinner';
 
 // Protected Route wrapper
@@ -94,6 +95,7 @@ function App() {
         {/* Committee Routes */}
         <Route path="committee" element={<CommitteeDashboard />} />
         <Route path="communications" element={<Communications />} />
+        <Route path="regional-statistics" element={<RegionalStatistics />} />
         
         {/* Admin Routes */}
         <Route path="admin" element={<AdminPanel />} />

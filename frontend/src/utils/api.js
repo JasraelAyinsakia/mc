@@ -111,6 +111,7 @@ export const dashboardAPI = {
   getApplicationsByMonth: () => api.get('/dashboard/applications-by-month'),
   getLocations: () => api.get('/dashboard/locations'),
   getCourtshipCompletion: () => api.get('/dashboard/courtship-completion'),
+  getRegionalStatistics: () => api.get('/dashboard/regional-statistics'),
 };
 
 // Notifications API
