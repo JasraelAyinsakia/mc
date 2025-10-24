@@ -223,47 +223,6 @@ class MedicalTest(db.Model):
         }
 
 
-class CourtshipProgress(db.Model):
-    """Track courtship manual progress (24 weeks)"""
-    __tablename__ = 'courtship_progress'
-    
-    id = db.Column(db.Integer, primary_key=True)
-    application_id = db.Column(db.Integer, db.ForeignKey('applications.id'), nullable=False)
-    
-    week_number = db.Column(db.Integer, nullable=False)  # 1-24
-    topic_title = db.Column(db.String(200), nullable=False)
-    topic_description = db.Column(db.Text)
-    
-    # Progress
-    status = db.Column(db.String(30), default='not_started')  # not_started, in_progress, completed
-    completed_at = db.Column(db.DateTime)
-    
-    # Couple's notes/reflections
-    couple_notes = db.Column(db.Text)
-    counselor_notes = db.Column(db.Text)
-    
-    # Reviewed by counselor
-    reviewed = db.Column(db.Boolean, default=False)
-    reviewed_at = db.Column(db.DateTime)
-    reviewed_by_id = db.Column(db.Integer, db.ForeignKey('users.id'))
-    reviewed_by = db.relationship('User', foreign_keys=[reviewed_by_id])
-    
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    
-    def to_dict(self):
-        return {
-            'id': self.id,
-            'week_number': self.week_number,
-            'topic_title': self.topic_title,
-            'topic_description': self.topic_description,
-            'status': self.status,
-            'completed_at': self.completed_at.isoformat() if self.completed_at else None,
-            'couple_notes': self.couple_notes,
-            'counselor_notes': self.counselor_notes,
-            'reviewed': self.reviewed
-        }
-
 
 class Meeting(db.Model):
     """Meetings scheduled for applications"""
@@ -550,7 +509,6 @@ class Notification(db.Model):
 class CourtshipProgress(db.Model):
     """Track courtship topic progression for couples"""
     __tablename__ = 'courtship_progress'
-    __table_args__ = {'extend_existing': True}
     
     id = db.Column(db.Integer, primary_key=True)
     application_id = db.Column(db.Integer, db.ForeignKey('applications.id'), nullable=False)
