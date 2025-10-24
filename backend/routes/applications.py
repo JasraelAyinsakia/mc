@@ -211,7 +211,7 @@ def get_application(application_id):
     medical_tests = [test.to_dict() for test in application.medical_tests]
     
     # Get courtship progress
-    courtship = [progress.to_dict() for progress in application.courtship_progress]
+    courtship = [progress.to_dict() for progress in application.courtship_progress_records]
     
     # Get check-ins
     check_ins = [check_in.to_dict() for check_in in application.check_ins]

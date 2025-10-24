@@ -116,7 +116,7 @@ class Application(db.Model):
     # Relationships
     stage_history = db.relationship('StageHistory', backref='application', lazy=True, cascade='all, delete-orphan')
     medical_tests = db.relationship('MedicalTest', backref='application', lazy=True, cascade='all, delete-orphan')
-    courtship_progress = db.relationship('CourtshipProgress', backref='application', lazy=True, cascade='all, delete-orphan')
+    courtship_progress_records = db.relationship('CourtshipProgress', back_populates='application', lazy='dynamic', cascade='all, delete-orphan')
     check_ins = db.relationship('CheckIn', backref='application', lazy=True, cascade='all, delete-orphan')
     meetings = db.relationship('Meeting', backref='application', lazy=True, cascade='all, delete-orphan')
     documents = db.relationship('Document', backref='application', lazy=True, cascade='all, delete-orphan')
@@ -529,8 +529,8 @@ class CourtshipProgress(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
-    # Relationships - using backref with unique name to avoid conflicts
-    application = db.relationship('Application', backref=db.backref('courtship_progress_records', lazy='dynamic'))
+    # Relationships - using back_populates to avoid conflicts
+    application = db.relationship('Application', back_populates='courtship_progress_records')
     updated_by_user = db.relationship('User', foreign_keys=[last_updated_by], backref='courtship_updates')
     
     def to_dict(self, include_application=False):
