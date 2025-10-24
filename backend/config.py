@@ -18,9 +18,9 @@ class Config:
     
     # Session configuration
     PERMANENT_SESSION_LIFETIME = timedelta(days=7)
-    SESSION_COOKIE_SECURE = False  # Set to True in production with HTTPS
+    SESSION_COOKIE_SECURE = True  # Required for SameSite=None
     SESSION_COOKIE_HTTPONLY = True
-    SESSION_COOKIE_SAMESITE = 'Lax'
+    SESSION_COOKIE_SAMESITE = 'None'  # Allow cross-origin cookies
     
     # Application settings
     MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 16MB max file size
@@ -44,7 +44,6 @@ class DevelopmentConfig(Config):
 class ProductionConfig(Config):
     """Production configuration"""
     DEBUG = False
-    SESSION_COOKIE_SECURE = True
 
 config = {
     'development': DevelopmentConfig,

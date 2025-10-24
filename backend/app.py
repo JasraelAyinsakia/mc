@@ -5,8 +5,11 @@ from config import config
 from models import db, User
 import os
 
-def create_app(config_name='development'):
+def create_app(config_name=None):
     app = Flask(__name__)
+    # Auto-detect environment
+    if config_name is None:
+        config_name = 'production' if os.environ.get('DATABASE_URL') else 'development'
     app.config.from_object(config[config_name])
     
     # Initialize extensions
