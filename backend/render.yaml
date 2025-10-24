@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: dlbc-marriage-api
+    env: python
+    region: oregon
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app
+    envVars:
+      - key: FLASK_ENV
+        value: production
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DATABASE_URL
+        fromDatabase:
+          name: dlbc-marriage-db
+          property: connectionString
+
+databases:
+  - name: dlbc-marriage-db
+    plan: free
+    region: oregon
+

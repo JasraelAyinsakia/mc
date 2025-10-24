@@ -1,0 +1,113 @@
+import axios from 'axios';
+
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
+
+const api = axios.create({
+  baseURL: API_URL,
+  withCredentials: true,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+// Request interceptor
+api.interceptors.request.use(
+  (config) => {
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
+// Response interceptor
+api.interceptors.response.use(
+  (response) => {
+    return response;
+  },
+  (error) => {
+    if (error.response?.status === 401) {
+      // Redirect to login if unauthorized
+      window.location.href = '/login';
+    }
+    return Promise.reject(error);
+  }
+);
+
+// Auth API
+export const authAPI = {
+  login: (credentials) => api.post('/auth/login', credentials),
+  register: (userData) => api.post('/auth/register', userData),
+  logout: () => api.post('/auth/logout'),
+  getCurrentUser: () => api.get('/auth/me'),
+  updateProfile: (data) => api.put('/auth/profile', data),
+  changePassword: (data) => api.post('/auth/change-password', data),
+};
+
+// Applications API
+export const applicationsAPI = {
+  create: (data) => api.post('/applications/', data),
+  getAll: (params) => api.get('/applications/', { params }),
+  getById: (id) => api.get(`/applications/${id}`),
+  update: (id, data) => api.put(`/applications/${id}`, data),
+  updateStage: (id, data) => api.post(`/applications/${id}/stage`, data),
+};
+
+// Committee API
+export const committeeAPI = {
+  getPendingApplications: () => api.get('/committee/applications/pending'),
+  assignApplication: (id, data) => api.post(`/committee/applications/${id}/assign`, data),
+  recordInterview: (id, data) => api.post(`/committee/applications/${id}/interview`, data),
+  getMembers: () => api.get('/committee/members'),
+  getStatistics: () => api.get('/committee/statistics'),
+};
+
+// Courtship API
+export const courtshipAPI = {
+  initialize: (applicationId) => api.post(`/courtship/applications/${applicationId}/initialize`),
+  getTopics: (applicationId) => api.get(`/courtship/applications/${applicationId}/topics`),
+  updateTopic: (topicId, data) => api.put(`/courtship/topics/${topicId}`, data),
+  getCheckIns: (applicationId) => api.get(`/courtship/applications/${applicationId}/checkins`),
+  updateCheckIn: (checkInId, data) => api.put(`/courtship/checkins/${checkInId}`, data),
+  getProgress: (applicationId) => api.get(`/courtship/applications/${applicationId}/progress`),
+};
+
+// Medical API
+export const medicalAPI = {
+  createTest: (applicationId, data) => api.post(`/medical/applications/${applicationId}/tests`, data),
+  getTests: (applicationId) => api.get(`/medical/applications/${applicationId}/tests`),
+  updateTest: (testId, data) => api.put(`/medical/tests/${testId}`, data),
+  getCompatibility: (applicationId) => api.get(`/medical/applications/${applicationId}/compatibility`),
+};
+
+// Dashboard API
+export const dashboardAPI = {
+  getStats: () => api.get('/dashboard/stats'),
+  getRecentActivity: (limit) => api.get('/dashboard/recent-activity', { params: { limit } }),
+  getUpcomingCheckIns: () => api.get('/dashboard/upcoming-checkins'),
+  getApplicationsByMonth: () => api.get('/dashboard/applications-by-month'),
+  getLocations: () => api.get('/dashboard/locations'),
+  getCourtshipCompletion: () => api.get('/dashboard/courtship-completion'),
+};
+
+// Notifications API
+export const notificationsAPI = {
+  getAll: (params) => api.get('/notifications/', { params }),
+  markAsRead: (id) => api.put(`/notifications/${id}/read`),
+  markAllAsRead: () => api.put('/notifications/mark-all-read'),
+  delete: (id) => api.delete(`/notifications/${id}`),
+  getUnreadCount: () => api.get('/notifications/unread-count'),
+};
+
+// Admin API
+export const adminAPI = {
+  getUsers: (params) => api.get('/admin/users', { params }),
+  createUser: (data) => api.post('/admin/users', data),
+  updateUser: (id, data) => api.put(`/admin/users/${id}`, data),
+  resetPassword: (id, data) => api.post(`/admin/users/${id}/reset-password`, data),
+  deleteUser: (id) => api.delete(`/admin/users/${id}`),
+  getStats: () => api.get('/admin/stats/overview'),
+};
+
+export default api;
+
