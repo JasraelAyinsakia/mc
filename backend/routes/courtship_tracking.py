@@ -202,12 +202,13 @@ def get_current_week(application_id):
 @courtship_tracking_bp.route('/progress/<int:application_id>/initialize', methods=['POST'])
 @login_required
 def initialize_progress(application_id):
-    """Initialize all 25 weeks for an application (for committee use)"""
-    # Only committee members can initialize
-    if current_user.role not in ['committee_member', 'central_committee', 'overseer']:
-        return jsonify({'error': 'Unauthorized'}), 403
-    
+    """Initialize all 25 weeks for an application"""
     application = Application.query.get_or_404(application_id)
+    
+    # Allow the applicant, partner, or committee to initialize
+    if application.applicant_id != current_user.id and application.partner_id != current_user.id:
+        if current_user.role not in ['committee_member', 'central_committee', 'overseer']:
+            return jsonify({'error': 'Unauthorized'}), 403
     
     # Check if already initialized
     existing = CourtshipProgress.query.filter_by(application_id=application_id).first()

@@ -30,19 +30,38 @@ const CourtshipTopics = () => {
   const fetchProgress = async () => {
     try {
       const response = await courtshipTrackingAPI.getProgress(id);
-      setWeeks(response.data.weeks);
-      setStats(response.data.stats);
       
-      // Auto-select current week
-      const currentWeek = response.data.weeks.find(
-        w => w.progress.status !== 'completed'
-      );
-      if (currentWeek) {
-        handleSelectWeek(currentWeek);
+      // If no weeks data, initialize progress first
+      if (!response.data.weeks || response.data.weeks.length === 0) {
+        toast.info('Initializing your courtship manual...');
+        await courtshipTrackingAPI.initializeProgress(id);
+        // Fetch again after initialization
+        const retryResponse = await courtshipTrackingAPI.getProgress(id);
+        setWeeks(retryResponse.data.weeks);
+        setStats(retryResponse.data.stats);
+        
+        // Auto-select week 1
+        if (retryResponse.data.weeks && retryResponse.data.weeks.length > 0) {
+          handleSelectWeek(retryResponse.data.weeks[0]);
+        }
+      } else {
+        setWeeks(response.data.weeks);
+        setStats(response.data.stats);
+        
+        // Auto-select current week
+        const currentWeek = response.data.weeks.find(
+          w => w.progress.status !== 'completed'
+        );
+        if (currentWeek) {
+          handleSelectWeek(currentWeek);
+        } else if (response.data.weeks.length > 0) {
+          // If all completed, select first week
+          handleSelectWeek(response.data.weeks[0]);
+        }
       }
     } catch (error) {
       console.error('Error fetching progress:', error);
-      toast.error('Failed to load courtship topics');
+      toast.error('Failed to load courtship topics. Please try again.');
     } finally {
       setLoading(false);
     }
