@@ -550,6 +550,7 @@ class Notification(db.Model):
 class CourtshipProgress(db.Model):
     """Track courtship topic progression for couples"""
     __tablename__ = 'courtship_progress'
+    __table_args__ = {'extend_existing': True}
     
     id = db.Column(db.Integer, primary_key=True)
     application_id = db.Column(db.Integer, db.ForeignKey('applications.id'), nullable=False)
