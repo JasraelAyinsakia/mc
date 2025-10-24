@@ -13,6 +13,7 @@ const AdminPanel = () => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showPermissionsInfo, setShowPermissionsInfo] = useState(false);
   const [formData, setFormData] = useState({
     email: '',
     username: '',
@@ -25,6 +26,42 @@ const AdminPanel = () => {
     division: '',
     local_church: '',
   });
+
+  const rolePermissions = {
+    single: [
+      'View own applications',
+      'Create new applications',
+      'View scheduled meetings',
+      'Receive committee feedback',
+      'View medical test instructions'
+    ],
+    committee_member: [
+      'View applications in their region',
+      'Update application stages',
+      'Schedule meetings',
+      'Add notes and feedback',
+      'Access committee portal',
+      'Participate in divisional and regional discussions',
+      'View medical test results'
+    ],
+    central_committee: [
+      'View all applications',
+      'Manage all application stages',
+      'Schedule and manage meetings',
+      'Access admin panel',
+      'Create and manage users',
+      'Participate in all discussions',
+      'Pin and close discussions',
+      'Access central committee-only discussions'
+    ],
+    overseer: [
+      'Full system access',
+      'All central committee permissions',
+      'Oversee all regions and divisions',
+      'Final approval authority',
+      'System-wide announcements'
+    ]
+  };
 
   useEffect(() => {
     fetchUsers();
@@ -110,13 +147,22 @@ const AdminPanel = () => {
           <h1 className="text-3xl font-bold text-gray-900">User Management</h1>
           <p className="text-gray-600 mt-1">Manage system users and roles</p>
         </div>
-        <button
-          onClick={() => setShowCreateModal(true)}
-          className="btn btn-primary flex items-center"
-        >
-          <PlusIcon className="h-5 w-5 mr-2" />
-          Create User
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={() => setShowPermissionsInfo(true)}
+            className="btn btn-outline flex items-center"
+          >
+            <KeyIcon className="h-5 w-5 mr-2" />
+            Permissions
+          </button>
+          <button
+            onClick={() => setShowCreateModal(true)}
+            className="btn btn-primary flex items-center"
+          >
+            <PlusIcon className="h-5 w-5 mr-2" />
+            Create User
+          </button>
+        </div>
       </div>
 
       {/* Users Table */}
@@ -365,6 +411,45 @@ const AdminPanel = () => {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Permissions Info Modal */}
+      {showPermissionsInfo && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg max-w-4xl w-full p-6 max-h-[90vh] overflow-y-auto">
+            <h3 className="text-2xl font-semibold mb-4">Role Permissions</h3>
+            <p className="text-gray-600 mb-6">
+              Each role in the system has specific permissions. Assign roles carefully based on responsibilities.
+            </p>
+
+            <div className="grid md:grid-cols-2 gap-6">
+              {Object.entries(rolePermissions).map(([role, permissions]) => (
+                <div key={role} className="border-2 border-gray-200 rounded-lg p-4">
+                  <h4 className="text-lg font-semibold text-primary-600 capitalize mb-3">
+                    {role.replace('_', ' ')}
+                  </h4>
+                  <ul className="space-y-2">
+                    {permissions.map((permission, index) => (
+                      <li key={index} className="flex items-start text-sm">
+                        <span className="text-green-500 mr-2">✓</span>
+                        <span className="text-gray-700">{permission}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-6 pt-4 border-t">
+              <button
+                onClick={() => setShowPermissionsInfo(false)}
+                className="btn btn-primary w-full"
+              >
+                Got it
+              </button>
+            </div>
           </div>
         </div>
       )}
