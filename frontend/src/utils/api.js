@@ -162,5 +162,16 @@ export const complaintsAPI = {
   getMyComplaints: () => api.get('/complaints/my-complaints'),
 };
 
+// Courtship Tracking API
+export const courtshipTrackingAPI = {
+  getAllTopics: () => api.get('/courtship-tracking/topics'),
+  getTopicByWeek: (week) => api.get(`/courtship-tracking/topics/${week}`),
+  getProgress: (applicationId) => api.get(`/courtship-tracking/progress/${applicationId}`),
+  updateProgress: (applicationId, week, data) => api.post(`/courtship-tracking/progress/${applicationId}/week/${week}`, data),
+  getCurrentWeek: (applicationId) => api.get(`/courtship-tracking/progress/${applicationId}/current`),
+  initializeProgress: (applicationId) => api.post(`/courtship-tracking/progress/${applicationId}/initialize`),
+  getSupervisorNotes: () => api.get('/courtship-tracking/supervisor-notes'),
+};
+
 export default api;
 

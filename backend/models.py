@@ -546,3 +546,56 @@ class Notification(db.Model):
             'created_at': self.created_at.isoformat() if self.created_at else None
         }
 
+
+class CourtshipProgress(db.Model):
+    """Track courtship topic progression for couples"""
+    __tablename__ = 'courtship_progress'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    application_id = db.Column(db.Integer, db.ForeignKey('applications.id'), nullable=False)
+    week_number = db.Column(db.Integer, nullable=False)  # 1-25
+    
+    # Status: 'not_started', 'in_progress', 'completed'
+    status = db.Column(db.String(20), default='not_started')
+    
+    # Shared notes between partners
+    notes = db.Column(db.Text)
+    
+    # Track who added/updated notes
+    last_updated_by = db.Column(db.Integer, db.ForeignKey('users.id'))
+    
+    # Date tracking
+    started_at = db.Column(db.DateTime)
+    completed_at = db.Column(db.DateTime)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # Relationships
+    application = db.relationship('Application', backref='courtship_progress')
+    updated_by_user = db.relationship('User', foreign_keys=[last_updated_by])
+    
+    def to_dict(self, include_application=False):
+        data = {
+            'id': self.id,
+            'application_id': self.application_id,
+            'week_number': self.week_number,
+            'status': self.status,
+            'notes': self.notes,
+            'last_updated_by': self.last_updated_by,
+            'last_updated_by_name': self.updated_by_user.full_name if self.updated_by_user else None,
+            'started_at': self.started_at.isoformat() if self.started_at else None,
+            'completed_at': self.completed_at.isoformat() if self.completed_at else None,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None
+        }
+        
+        if include_application and self.application:
+            data['application'] = {
+                'id': self.application.id,
+                'applicant_name': self.application.applicant_name,
+                'partner_name': self.application.partner_name,
+                'stage': self.application.stage
+            }
+        
+        return data
+
