@@ -388,10 +388,12 @@ const ApplicationDetail = () => {
         </div>
       )}
 
-      {/* Scheduled Meetings */}
+      {/* Scheduled Meetings - Visible to all */}
       {meetings && meetings.length > 0 && (
         <div className="card">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">Scheduled Meetings</h2>
+          <h2 className="text-xl font-semibold text-gray-900 mb-4">
+            {isCommittee ? 'Scheduled Meetings' : 'Your Scheduled Meetings'}
+          </h2>
           <div className="space-y-4">
             {meetings.map((meeting) => (
               <div key={meeting.id} className="border-l-4 border-primary-500 pl-4 py-2">
@@ -413,7 +415,14 @@ const ApplicationDetail = () => {
                       <span className="capitalize">📍 {meeting.meeting_format.replace('_', ' ')}</span>
                     </div>
                     {meeting.location && (
-                      <p className="text-sm text-gray-500 mt-1">Location: {meeting.location}</p>
+                      <p className="text-sm text-gray-500 mt-1">📍 Location: {meeting.location}</p>
+                    )}
+                    {/* Show meeting notes to everyone if completed */}
+                    {meeting.notes && meeting.status === 'completed' && (
+                      <div className="mt-2 p-2 bg-gray-50 rounded">
+                        <p className="text-xs font-medium text-gray-700">Meeting Notes:</p>
+                        <p className="text-sm text-gray-600 mt-1">{meeting.notes}</p>
+                      </div>
                     )}
                   </div>
                   <span
@@ -430,6 +439,77 @@ const ApplicationDetail = () => {
                 </div>
               </div>
             ))}
+          </div>
+        </div>
+      )}
+
+      {/* Medical Report Instructions - Visible to applicant */}
+      {!isCommittee && application.current_stage && 
+       (application.current_stage === 'medical_tests' || application.current_stage === 'initial_interview') && (
+        <div className="card bg-blue-50 border-2 border-blue-200">
+          <h2 className="text-xl font-semibold text-blue-900 mb-4">📋 Medical Tests Instructions</h2>
+          <div className="space-y-3 text-sm text-blue-900">
+            <p className="font-medium">Required Tests:</p>
+            <ul className="list-disc list-inside ml-4 space-y-1">
+              <li>HIV Test</li>
+              <li>Hepatitis Test</li>
+              <li>Sickle Cell Test</li>
+            </ul>
+            
+            <div className="mt-4 p-4 bg-white rounded-lg">
+              <p className="font-semibold text-gray-900 mb-2">📍 Submit Results To:</p>
+              <div className="space-y-1 text-gray-700">
+                <p><strong>Committee:</strong> {application.applicant?.division || 'Your Local'} Marriage Committee</p>
+                <p><strong>Region:</strong> {application.applicant?.region || 'Your Region'}</p>
+                <p><strong>Local Church:</strong> {application.applicant?.local_church || 'Your Local Church'}</p>
+              </div>
+              <div className="mt-3 pt-3 border-t border-gray-200">
+                <p className="text-xs text-gray-600">
+                  ⚠️ <strong>Important:</strong> Medical results must be sent directly from the hospital to the committee. 
+                  Do not handle the results yourself.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Committee Feedback - Visible to applicant */}
+      {!isCommittee && application.stages && application.stages.length > 0 && (
+        <div className="card">
+          <h2 className="text-xl font-semibold text-gray-900 mb-4">Committee Feedback</h2>
+          <div className="space-y-4">
+            {application.stages
+              .filter((stage) => stage.notes && stage.notes.trim() !== '')
+              .map((stage) => (
+                <div key={stage.id} className="border-l-4 border-blue-500 pl-4 py-2">
+                  <div className="flex justify-between items-start">
+                    <div className="flex-1">
+                      <h3 className="font-medium text-gray-900">{stage.stage_name}</h3>
+                      <p className="text-sm text-gray-600 mt-2">{stage.notes}</p>
+                      <p className="text-xs text-gray-500 mt-2">
+                        {stage.completed_at
+                          ? new Date(stage.completed_at).toLocaleDateString()
+                          : 'In progress'}
+                      </p>
+                    </div>
+                    <span
+                      className={`px-3 py-1 rounded-full text-xs font-medium ${
+                        stage.status === 'completed'
+                          ? 'bg-green-100 text-green-800'
+                          : stage.status === 'in_progress'
+                          ? 'bg-blue-100 text-blue-800'
+                          : 'bg-yellow-100 text-yellow-800'
+                      }`}
+                    >
+                      {stage.status}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            {application.stages.filter((stage) => stage.notes && stage.notes.trim() !== '').length === 0 && (
+              <p className="text-gray-500 text-center py-4">No feedback yet</p>
+            )}
           </div>
         </div>
       )}

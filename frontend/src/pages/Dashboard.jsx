@@ -46,32 +46,53 @@ const Dashboard = () => {
     return <LoadingSpinner />;
   }
 
-  const statCards = [
-    {
-      name: 'Total Applications',
-      value: stats?.total_applications || 0,
-      icon: DocumentTextIcon,
-      color: 'bg-blue-500',
-    },
-    {
-      name: 'Pending',
-      value: stats?.pending || 0,
-      icon: ClockIcon,
-      color: 'bg-yellow-500',
-    },
-    {
-      name: 'Approved',
-      value: stats?.approved || 0,
-      icon: CheckCircleIcon,
-      color: 'bg-green-500',
-    },
-    {
-      name: 'This Month',
-      value: stats?.this_month || 0,
-      icon: DocumentTextIcon,
-      color: 'bg-purple-500',
-    },
-  ];
+  const statCards = user?.role === 'single'
+    ? [
+        {
+          name: 'My Applications',
+          value: stats?.total_applications || 0,
+          icon: DocumentTextIcon,
+          color: 'bg-blue-500',
+        },
+        {
+          name: 'In Progress',
+          value: stats?.pending || 0,
+          icon: ClockIcon,
+          color: 'bg-yellow-500',
+        },
+        {
+          name: 'Approved',
+          value: stats?.approved || 0,
+          icon: CheckCircleIcon,
+          color: 'bg-green-500',
+        },
+      ]
+    : [
+        {
+          name: 'Total Applications',
+          value: stats?.total_applications || 0,
+          icon: DocumentTextIcon,
+          color: 'bg-blue-500',
+        },
+        {
+          name: 'Pending',
+          value: stats?.pending || 0,
+          icon: ClockIcon,
+          color: 'bg-yellow-500',
+        },
+        {
+          name: 'Approved',
+          value: stats?.approved || 0,
+          icon: CheckCircleIcon,
+          color: 'bg-green-500',
+        },
+        {
+          name: 'This Month',
+          value: stats?.this_month || 0,
+          icon: DocumentTextIcon,
+          color: 'bg-purple-500',
+        },
+      ];
 
   const getStatusBadge = (status) => {
     const badges = {

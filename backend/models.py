@@ -389,6 +389,82 @@ class Document(db.Model):
         }
 
 
+class Discussion(db.Model):
+    """Discussion board for committee communications"""
+    __tablename__ = 'discussions'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    application_id = db.Column(db.Integer, db.ForeignKey('applications.id'), nullable=True)
+    
+    title = db.Column(db.String(200), nullable=False)
+    content = db.Column(db.Text, nullable=False)
+    category = db.Column(db.String(50))  # general, application_specific, policy, announcement
+    
+    # Visibility and access control
+    visibility = db.Column(db.String(50), default='all_committees')  # all_committees, regional, divisional, central_only
+    region = db.Column(db.String(100))  # For regional-specific discussions
+    division = db.Column(db.String(100))  # For division-specific discussions
+    
+    # Created by
+    created_by_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    created_by = db.relationship('User', foreign_keys=[created_by_id])
+    
+    # Status
+    is_pinned = db.Column(db.Boolean, default=False)
+    is_closed = db.Column(db.Boolean, default=False)
+    
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # Relationships
+    replies = db.relationship('DiscussionReply', backref='discussion', lazy=True, cascade='all, delete-orphan')
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'application_id': self.application_id,
+            'title': self.title,
+            'content': self.content,
+            'category': self.category,
+            'visibility': self.visibility,
+            'region': self.region,
+            'division': self.division,
+            'created_by': self.created_by.to_dict() if self.created_by else None,
+            'is_pinned': self.is_pinned,
+            'is_closed': self.is_closed,
+            'reply_count': len(self.replies) if self.replies else 0,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None,
+        }
+
+
+class DiscussionReply(db.Model):
+    """Replies to discussions"""
+    __tablename__ = 'discussion_replies'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    discussion_id = db.Column(db.Integer, db.ForeignKey('discussions.id'), nullable=False)
+    
+    content = db.Column(db.Text, nullable=False)
+    
+    # Created by
+    created_by_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    created_by = db.relationship('User', foreign_keys=[created_by_id])
+    
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'discussion_id': self.discussion_id,
+            'content': self.content,
+            'created_by': self.created_by.to_dict() if self.created_by else None,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None,
+        }
+
+
 class Notification(db.Model):
     """Notification system"""
     __tablename__ = 'notifications'
