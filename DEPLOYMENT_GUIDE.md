@@ -7,14 +7,79 @@ Deploy your DLBC Marriage Committee System for free using Render and Vercel.
 ## 🎯 Overview
 
 We'll deploy:
-- **Backend + Database** → Render.com (Free)
+- **Backend + Database** → Render.com (Free) *or* Railway.app (Free)
 - **Frontend** → Vercel (Free)
 
 **Total Cost: $0/month** ✨
 
 ---
 
-## Part 1: Deploy Backend to Render (10 minutes)
+---
+
+## Part 1 (Option A): Deploy Backend to **Railway** (10 minutes)
+
+> ✅ Recommended going forward (Render free tier is unstable for long-running Flask apps)
+
+### Step 1: Create a Railway Account
+
+1. Go to https://railway.app
+2. Click **"Login"** → Continue with GitHub/Google
+3. Authorize the Railway GitHub app
+
+### Step 2: Import the GitHub Repo
+
+1. Click **"New Project"** → **"Deploy from GitHub repo"**
+2. Select `JasraelAyinsakia/mc`
+3. When prompted for services, pick the **backend** directory only
+
+### Step 3: Configure the Web Service
+
+| Setting              | Value                                |
+|----------------------|--------------------------------------|
+| **Service name**     | `mc-backend` (or anything you like)  |
+| **Root Directory**   | `backend`                            |
+| **Builder**          | Auto (Nixpacks)                      |
+| **Build Command**    | `pip install -r requirements.txt`    |
+| **Start Command**    | `gunicorn app:app --bind 0.0.0.0:$PORT` |
+| **Health Check**     | `/api/health`                        |
+
+### Step 4: Add a Postgres Database
+
+1. Inside the same project, click **"+ New"** → **"Database"** → **"PostgreSQL"**
+2. Wait for Railway to provision the database
+3. Open the database → **"Connect"** → copy the **Internal Database URL**
+4. Go back to your web service → **Variables** → add:
+   - `DATABASE_URL` = `<internal-postgres-url>`
+   - `FLASK_ENV` = `production`
+   - `SECRET_KEY` = generate something like `dlbc-railway-secret-2025`
+
+### Step 5: Initialize the Database
+
+Railway lets you run ad-hoc commands against a service:
+
+```bash
+railway run --service mc-backend "cd backend && python init_db.py"
+```
+
+If you prefer the dashboard:
+1. Go to your backend service → **"Settings"**
+2. Click **"Run Command"**
+3. Run `python init_db.py`
+
+### Step 6: Note the Backend URL
+
+Once deployed, Railway will give you a domain like:
+```
+https://mc-backend-production.up.railway.app
+```
+
+You’ll use this URL in the frontend (`VITE_API_URL`).
+
+> ⚠️ Make sure this domain is added to `CORS` in `backend/app.py`.
+
+---
+
+## Part 1 (Option B): Deploy Backend to **Render** (legacy instructions)
 
 ### Step 1: Create Render Account
 
