@@ -7,8 +7,8 @@ Deploy your DLBC Marriage Committee System for free using Render and Vercel.
 ## 🎯 Overview
 
 We'll deploy:
-- **Backend + Database** → Render.com (Free) *or* Railway.app (Free)
-- **Frontend** → Vercel (Free)
+- **Backend + Database** → Railway.app (Free) *(Render instructions kept as fallback)*
+- **Frontend** → Railway.app (Free) *(new, reliable static hosting flow)*
 
 **Total Cost: $0/month** ✨
 
@@ -164,78 +164,74 @@ CORS(app, supports_credentials=True, origins=[
 
 ---
 
-## Part 2: Deploy Frontend to Vercel (5 minutes)
+## Part 2: Deploy Frontend to Railway (from scratch)
 
-### Step 1: Create Vercel Account
+### Step 0: Install a Static Server (one-time repo change)
 
-1. Go to https://vercel.com
-2. Click "Sign Up"
-3. Sign up with GitHub (recommended)
+Railway needs a process that keeps listening on `$PORT`. Add `serve` locally and push:
 
-### Step 2: Install Vercel CLI (Optional but Recommended)
-
-```bash
-npm install -g vercel
-```
-
-### Step 3: Update Frontend Configuration
-
-Update `frontend/src/utils/api.js`:
-
-```javascript
-const API_URL = import.meta.env.VITE_API_URL || 
-                'https://dlbc-marriage-api.onrender.com/api';
-```
-
-Commit and push:
-```bash
-git add .
-git commit -m "Update API URL for production"
-git push
-```
-
-### Step 4: Deploy on Vercel
-
-**Option A: Using Vercel Dashboard**
-1. Login to Vercel
-2. Click **"Add New"** → **"Project"**
-3. Import your GitHub repository
-4. Configure:
-   - **Framework Preset**: Vite
-   - **Root Directory**: `frontend`
-   - **Build Command**: `npm run build`
-   - **Output Directory**: `dist`
-5. Add **Environment Variable**:
-   - `VITE_API_URL` = `https://dlbc-marriage-api.onrender.com/api`
-6. Click **"Deploy"**
-
-**Option B: Using Vercel CLI**
 ```bash
 cd frontend
-vercel
-
-# Follow the prompts:
-# Set up and deploy? Yes
-# Which scope? Your account
-# Link to existing project? No
-# Project name? dlbc-marriage-frontend
-# Directory? ./
-# Override settings? No
+npm install --save-dev serve
+git add package.json package-lock.json
+git commit -m "Add serve for Railway static hosting"
+git push origin main
 ```
+
+*(If you prefer a PR instead of pushing to main, create a branch and open a PR.)*
+
+### Step 1: Create a Railway Frontend Service
+
+1. In the **same Railway project** (so it shares the database), click **"+ New" → "Deploy from GitHub"**.
+2. Choose the **same repo**: `JasraelAyinsakia/mc`.
+3. When asked for a directory, set **Root Directory = `frontend`**.
+4. Railway will create a new service called something like `mc-frontend`.
+
+### Step 2: Configure Build & Start Commands
+
+| Setting        | Value                                      |
+| -------------- | ------------------------------------------ |
+| **Build**      | `npm install && npm run build`             |
+| **Start**      | `npx serve -s dist -l $PORT`               |
+| **Health path**| leave empty (static apps respond on `/`)   |
+
+This builds the Vite app and serves the `dist` folder forever using `serve`.
+
+### Step 3: Environment Variables
+
+Add the API endpoint so the frontend knows where to call:
+
+| Key           | Value (example)                                      |
+|---------------|-------------------------------------------------------|
+| `VITE_API_URL`| `https://mc-production-491c.up.railway.app/api`      |
+
+*(Replace with your actual backend domain.)*
+
+### Step 4: Generate a Public Domain
+
+1. `mc-frontend` service → **Settings → Networking**.
+2. Choose **Custom Port** = `8080` (any number works as long as it matches `$PORT`).
+3. Click **Generate Domain** → copy the resulting URL, e.g.  
+   `https://mc-frontend-production.up.railway.app`
 
 ### Step 5: Update Backend CORS
 
-Once deployed, you'll get a URL like `https://dlbc-marriage-frontend.vercel.app`
+Add the new frontend domain to the backend CORS list (`backend/app.py`):
 
-Update `backend/app.py`:
 ```python
 CORS(app, supports_credentials=True, origins=[
     'http://localhost:3001',
-    'https://dlbc-marriage-frontend.vercel.app'
+    'https://mc-frontend-production.up.railway.app',
 ])
 ```
 
-Commit and push to trigger Render redeploy.
+Commit & push those backend changes so Railway redeploys the API.
+
+### Step 6: Redeploy Frontend
+
+After moving to `serve`, click **"Redeploy"** on the `mc-frontend` service.  
+Wait until it shows **Running** (green check), then visit the domain.  
+The SPA will now stay online and talk to your backend without 502 errors.
 
 ---
 
